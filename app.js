@@ -12,7 +12,14 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(__dirname));
 
-mongoose.connect('mongodb://localhost:27018/donoApp', { useNewUrlParser: true, useUnifiedTopology: true });
+const username = 'adddmin'
+const password = 'vhgTfv8xom24Kkn4'
+const encodedUsername = encodeURIComponent(username);
+const encodedPassword = encodeURIComponent(password);
+
+const connectionString = `mongodb+srv://${encodedUsername}:${encodedPassword}@cluster0.wvqfpmi.mongodb.net/?retryWrites=true&w=majority`;
+
+mongoose.connect(connectionString)
 
 const userSchema = new mongoose.Schema({
     googleId: String,
@@ -35,7 +42,7 @@ const User = mongoose.model('User', userSchema);
 passport.use(new GoogleStrategy({
   clientID: '545538491506-2101re9bk71nn0ge6qj5p9vhflc261eq.apps.googleusercontent.com',
   clientSecret: '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',
-  callbackURL: 'http://localhost:3000/auth/google/callback',
+  callbackURL: 'http://poll-self-dev.koyeb.app:3000/auth/google/callback',
 },
 async (accessToken, refreshToken, profile, done) => {
     try {
