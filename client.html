@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blood Donation App</title>
+</head>
+<body>
+  <!-- Your HTML content -->
+
+  <script>
+    // Get user's location after login
+    function getUserLocation() {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            // You can send the latitude and longitude to your server
+            // using an HTTP request (e.g., fetch or XMLHttpRequest).
+            sendLocationToServer(latitude, longitude);
+          },
+          (error) => {
+            console.error('Error getting location:', error);
+          }
+        );
+      } else {
+        console.error('Geolocation not supported in this browser.');
+      }
+    }
+
+    // Example function to send location to the server
+    function sendLocationToServer(latitude, longitude) {
+      // You can use fetch or XMLHttpRequest to send the data to your server
+      // Replace the URL and other details with your actual server endpoint.
+      const url = '/api/saveLocation';
+      const data = {
+        latitude,
+        longitude,
+      };
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Location saved successfully:', data);
+      })
+      .catch(error => {
+        console.error('Error saving location:', error);
+      });
+    }
+
+    // Call the function after login
+    getUserLocation();
+  </script>
+</body>
+</html>
