@@ -1,0 +1,167 @@
+<!-- views/profile.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= user.name %>'s Profile</title>
+    <link rel="stylesheet" href="/styles.css"> <!-- Include your stylesheets if needed -->
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        .plaintext {
+            margin-top: 0.5cm;
+            text-align: center;
+        }
+        header {
+            background-color: #3498db;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        header h1 {
+            font-size: 2em;
+        }
+
+        header {
+            /* ... (existing header styles) ... */
+            position: relative;
+        }
+
+        .profile-pic-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .profile-pic {
+            width: 50px; 
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #ffffff; 
+        }
+
+        .homepage-button {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .homepage-link {
+            background-color:red;
+            color: #ffffff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .preferred-locations {
+        text-align: center;
+        margin-top: 20px;
+        }
+
+        .preferred-location-item {
+            list-style: none;
+            margin-bottom: 10px;
+        }
+
+        .location-button {
+            background-color: #3498db;
+            color: #ffffff;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<!-- views/profile.ejs -->
+
+<body>
+    <header>
+        <div class="profile-pic-container">
+            <img src="<%= user.profilePic %>" alt="Profile Picture" class="profile-pic">
+        </div>
+        <h1>Profile</h1>
+        <h2><%= user.name %></h2>
+        <p>Email: <%= user.email %></p>
+    </header>
+    <p class="plaintext">Your preferred locations</p>
+    <section class="preferred-locations">
+    </section>
+
+    <div class="homepage-button">
+        <a href="/home" class="homepage-link">Homepage</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/getPref');
+                const result = await response.json();
+                console.log(result);
+    
+                if (result.success && result.data.length > 0) {
+                    const preferredLocations = result.data.map(location => ({
+                        name: location.name,
+                        lat: location.lat,
+                        lng: location.lng
+                    }));
+                    console.log(preferredLocations);
+    
+                    displayPreferredLocations(preferredLocations);
+                } else {
+                    displayNoPreferredLocations();
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        });
+    
+        function displayPreferredLocations(locations) {
+            const preferredLocationsSection = document.querySelector('.preferred-locations');
+    
+            if (preferredLocationsSection) {
+                locations.forEach(location => {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('preferred-location-item');
+    
+                    const button = document.createElement('button');
+                    button.textContent = location.name;
+                    button.classList.add('location-button');
+                    button.addEventListener('click', () => redirectToGoogleMaps(location.lat, location.lng));
+    
+                    listItem.appendChild(button);
+                    preferredLocationsSection.appendChild(listItem);
+                });
+            } else {
+                console.error('.preferred-locations section not found');
+            }
+        }
+    
+        function displayNoPreferredLocations() {
+            const preferredLocationsSection = document.querySelector('.preferred-locations');
+    
+            if (preferredLocationsSection) {
+                const listItem = document.createElement('li');
+                listItem.textContent = 'No preferred locations found.';
+                preferredLocationsSection.appendChild(listItem);
+            } else {
+                console.error('.preferred-locations section not found');
+            }
+        }
+    
+        function redirectToGoogleMaps(lat, lng) {
+            const url = `https://www.google.com/maps?q=${lat},${lng}`;
+            window.open(url, '_blank');
+        }
+    </script>
+
+</body>
+</html>
