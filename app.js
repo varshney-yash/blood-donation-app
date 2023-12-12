@@ -5,26 +5,25 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-
+const fetch = require('node-fetch');
+const ejs = require('ejs');
 const app = express();
+const fs = require('fs');
 
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(__dirname));
+app.use(require('express-session')({ secret: 'your-secret-key', resave: true, saveUninitialized: true }));
+app.use(passport.initialize());
+app.use(passport.session());
+app.set('view engine', 'ejs');
 
-const username = 'adddmin'
-const password = 'vhgTfv8xom24Kkn4'
-const encodedUsername = encodeURIComponent(username);
-const encodedPassword = encodeURIComponent(password);
-
-const connectionString = `mongodb+srv://${encodedUsername}:${encodedPassword}@cluster0.wvqfpmi.mongodb.net/?retryWrites=true&w=majority`;
-
-mongoose.connect(connectionString)
+mongoose.connect('mongodb://localhost:27017/donoApp');
 
 const userSchema = new mongoose.Schema({
-    googleId: String,
+    googleId: { type: String, index: true, unique: true },
     name: String,
-    email: String,
+    email: { type: String, index: true, unique: true },
     profilePic: String,
     latitude: Number,
     longitude: Number,
@@ -42,7 +41,7 @@ const User = mongoose.model('User', userSchema);
 passport.use(new GoogleStrategy({
   clientID: '545538491506-2101re9bk71nn0ge6qj5p9vhflc261eq.apps.googleusercontent.com',
   clientSecret: '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',
-  callbackURL: 'http://poll-self-dev.koyeb.app:3000/auth/google/callback',
+  callbackURL: 'http://localhost:3000/auth/google/callback',
 },
 async (accessToken, refreshToken, profile, done) => {
     try {
@@ -59,6 +58,7 @@ async (accessToken, refreshToken, profile, done) => {
         });
 
         await newUser.save();
+        sendWelcomeEmail(newUser);
         done(null, newUser);
       }
     } catch (error) {
@@ -80,9 +80,7 @@ passport.deserializeUser(async (id, done) => {
 });
 
 
-app.use(require('express-session')({ secret: 'your-secret-key', resave: true, saveUninitialized: true }));
-app.use(passport.initialize());
-app.use(passport.session());
+
 
 app.get('/login', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
@@ -90,19 +88,51 @@ app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
   (req, res) => {
     res.redirect('/');
-  });
+  }
+);
 
-  app.get('/', (req, res) => {
-    if (req.isAuthenticated()) {
-      const user = req.user; 
-      res.send(`
-        <h1>Hi, ${user.name}</h1>
-        <img src="${user.profilePic}" alt="Profile Picture">
-      `);
-    } else {
-      res.send('<h1>Welcome to the homepage. Login to continue</h1>');
-    }
-  });
+app.get('/',(req, res) => {
+  if (req.isAuthenticated()){
+    res.redirect('profile')
+  } else{
+    res.redirect('/home');
+  }
+});
+
+app.get('/home', (req, res) => {
+    res.sendFile(path.join(__dirname, 'homepage.html'));
+});
+
+app.get('/profile',(req,res)=>{
+  if(req.isAuthenticated()){
+    const user = req.user;
+    res.render('profile', { user });
+  } else {
+    res.redirect('/')
+  }``
+})
+
+const transporter = require('./emailConfig'); 
+
+function sendWelcomeEmail(user) {
+    const emailTemplate = fs.readFileSync('./views/welcomeEmailTemplate.ejs', 'utf-8');
+    const renderedEmail = ejs.render(emailTemplate, { userName: user.name });
+
+    const mailOptions = {
+        from: '17yashvarshney@gmail.com', 
+        to: user.email,
+        subject: 'Welcome to Our Platform!',
+        html: renderedEmail,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error('Error sending welcome email:', error);
+        } else {
+            console.log('Welcome email sent:', info.response);
+        }
+    });
+}
 
 app.get('/logout', (req, res) => {
 if (req.user && req.user.tokens && req.user.tokens.access_token) {
@@ -115,7 +145,7 @@ if (req.user && req.user.tokens && req.user.tokens.access_token) {
 }
 
 req.logout(() => {
-    res.redirect('/');
+    res.redirect('/home');
 });
 });
   
@@ -218,6 +248,22 @@ app.post('/api/updatePref', async (req, res) => {
         }
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+app.post('/api/getNearbyBloodBanks', async (req, res) => {
+    const { latitude, longitude } = req.body;
+
+    const apiUrl = `https://www.eraktkosh.in/BLDAHIMS/bloodbank/nearbyBB.cnt?hmode=GETNEARBYBLOODBANK&latitude=${latitude}&longitude=${longitude}`;
+  
+    try {
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      console.log(data)
+      res.json(data);
+    } catch (error) {
+      console.error('Error fetching nearby blood banks:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 

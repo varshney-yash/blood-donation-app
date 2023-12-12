@@ -10,12 +10,23 @@
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+    <div id="map-container">
+        <div id="map"></div>
+    </div>
 
-<div id="map"></div>
-<div>
-    <ul id="coordinates-list"></ul>
+    <div class="coordinates-container">
+        <h2>Preferred Locations</h2>
+        <ul class="coordinates-list" id="coordinates-list">
+        </ul>
+        <button class="save-button" onclick="submitPreference()">Save Preferences</button>
+    </div>
+<div class="popup" id="popup">
+    Preferences saved!
 </div>
-<button onclick="submitPreference()">Submit Preference</button>
+<div class="fab-container">
+    <a href="/home" class="fab-button">Home</a>
+    <a href="/dashboard" class="fab-button">Dashboard</a>
+</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-search/dist/leaflet-search.min.js"></script>

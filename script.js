@@ -69,6 +69,10 @@ async function initializeMap() {
 document.addEventListener('DOMContentLoaded', initializeMap);
 
 function collectCoordinates(clickedCoordinates) {
+    if (coordinatesList.length >= 3) {
+        alert("Maximum of 3 preferences allowed.");
+        return;
+    }
     var isWithinRadius = checkDistance(clickedCoordinates);
 
     if (!isWithinRadius) {
@@ -112,12 +116,12 @@ function updateCoordinatesList() {
         listItem.className = 'coordinate-item';
 
         // Check if lat, lng, and name properties are defined
-        var latText = coordinate.lat !== undefined ? `Lat: ${coordinate.lat.toFixed(4)}` : 'Lat: N/A';
-        var lngText = coordinate.lng !== undefined ? `Lng: ${coordinate.lng.toFixed(4)}` : 'Lng: N/A';
+        var latText = coordinate.lat !== undefined ? `${coordinate.lat.toFixed(4)}` : '';
+        var lngText = coordinate.lng !== undefined ? `${coordinate.lng.toFixed(4)}` : '';
         var nameText = coordinate.name !== undefined ? coordinate.name : 'Custom Location';
 
         listItem.innerHTML = `
-            <span>${index + 1}. ${nameText} - ${latText}, ${lngText}</span>
+            <span>${index + 1}. ${nameText} (${latText},${lngText})</span>
             <span class="delete-button" onclick="deleteCoordinate(${index})">&#10006;</span>
         `;
 
@@ -160,6 +164,10 @@ async function submitPreference() {
 
         if (data.success) {
             console.log("Preferences updated successfully:", data.message);
+            showPopup();
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
         } else {
             console.error("Failed to update preferences:", data.message);
         }
@@ -180,4 +188,13 @@ function getLocationName(latlng, callback) {
             console.error('Error fetching location name:', error);
             callback('');
         });
+}
+
+function showPopup() {
+    const popup = document.getElementById('popup');
+    popup.style.display = 'block';
+
+    setTimeout(() => {
+        popup.style.display = 'none';
+    }, 2000);
 }
