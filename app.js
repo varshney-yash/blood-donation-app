@@ -13,13 +13,19 @@ const fs = require('fs');
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(__dirname));
-app.use(require('express-session')({ secret: 'your-secret-key', resave: true, saveUninitialized: true }));
+app.use(require('cookie-session')({ secret: 'your-secret-key', resave: true, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 app.set('view engine', 'ejs');
 
-mongoose.connect('mongodb://localhost:27017/donoApp');
+const username = 'adddmin'
+const password = 'vhgTfv8xom24Kkn4'
+const encodedUsername = encodeURIComponent(username);
+const encodedPassword = encodeURIComponent(password);
 
+const connectionString = `mongodb+srv://${encodedUsername}:${encodedPassword}@cluster0.wvqfpmi.mongodb.net/?retryWrites=true&w=majority`;
+
+mongoose.connect(connectionString)
 const userSchema = new mongoose.Schema({
     googleId: { type: String, index: true, unique: true },
     name: String,
@@ -41,7 +47,7 @@ const User = mongoose.model('User', userSchema);
 passport.use(new GoogleStrategy({
   clientID: '545538491506-2101re9bk71nn0ge6qj5p9vhflc261eq.apps.googleusercontent.com',
   clientSecret: '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',
-  callbackURL: 'http://localhost:3000/auth/google/callback',
+  callbackURL: 'http://https://donate-blood.onrender.com/auth/google/callback',
 },
 async (accessToken, refreshToken, profile, done) => {
     try {
@@ -267,6 +273,10 @@ app.post('/api/getNearbyBloodBanks', async (req, res) => {
     }
 });
 
-app.listen(3000, () => {
-  console.log('Server started on http://localhost:3000');
+const PORT = process.env.PORT || 3030;
+
+// your code
+
+app.listen(PORT, () => {
+  console.log(`server started on port ${PORT}`);
 });
